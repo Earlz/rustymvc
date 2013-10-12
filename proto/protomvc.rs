@@ -15,9 +15,21 @@ impl Request {
     }
 }
 
+struct Response{
+    contenttype: ~str,
+    body: ~str
+}
+
+impl Response{
+    fn new() -> Response{
+        Response{contenttype: ~"text/plain", body: ~""}
+    }
+}
+
+
 struct Route {
     path: ~str,
-    handler: ~fn(&Request)
+    handler: ~fn(&Request, &mut Response)
 }
 
 struct RouteList{
@@ -31,10 +43,10 @@ impl RouteList{
     fn add(&mut self, r: Route){
         self.routes.push(r);
     }
-    fn execute(&self, req: &Request) {
+    fn execute(&self, req: &Request, res: &mut Response) {
         for route in self.routes.iter(){
             if(route.path == req.path){
-                (route.handler)(req);
+                (route.handler)(req, res);
             }
         }
     }
@@ -42,22 +54,24 @@ impl RouteList{
 }
 
 
-fn index(r: &Request){
-    println("yay index");
+fn index(r: &Request,res: &mut Response){
+    res.body.push_str("yay index");
 }
 
-fn foo(r: &Request){
-    println("yay foo");
+fn foo(r: &Request, res: &mut Response){
+    res.body.push_str("yay foo");
 }
 
 fn main() {
-    print("content-type: text/plain\r\n\r\n");
-    
     let req=Request::populate();
+    let mut res=Response::new();
     let mut routes=RouteList::new();
     routes.add(Route{path: ~"", handler: index});
     routes.add(Route{path: ~"/foo", handler: foo});
-    routes.execute(&req);
+    routes.execute(&req, &mut res);
+    println(res.contenttype);
+    println("");
+    println(res.body);
     println("hello from rust!");
     println!("path: {:s}", req.path);
     println!("querystring: {:s}", req.querystring);
