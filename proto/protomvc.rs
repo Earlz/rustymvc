@@ -6,10 +6,41 @@ struct Request {
 }
 
 
+impl Request {
+    fn populate() -> Request {
+        Request{
+            path: getenv("PATH_INFO").unwrap_or(~""),
+            querystring: getenv("QUERY_STRING").unwrap_or(~"")
+        }
+    }
+}
+
+struct Route {
+    path: ~str,
+    handler: ~fn(&Request)
+}
+
+fn index(r: &Request){
+    println("yay index");
+}
+
+fn foo(r: &Request){
+    println("yay foo");
+}
+
 fn main() {
     print("content-type: text/plain\r\n\r\n");
+    
+    let req=Request::populate();
+    let routes: &[Route] = &[
+            Route{path: ~"", handler: index}, 
+            Route{path: ~"/foo", handler: foo}];
+    for route in routes.iter(){
+        if(route.path == req.path){
+            (route.handler)(&req);
+        }
+    }
     println("hello from rust!");
-    let req=Request{ path: getenv("PATH_INFO").unwrap_or(~""), querystring: getenv("QUERY_STRING").unwrap_or(~"")};
     println!("path: {:s}", req.path);
     println!("querystring: {:s}", req.querystring);
     println("done!");
