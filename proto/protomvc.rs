@@ -1,5 +1,5 @@
 use std::os::getenv;
-use std::vec::append_one;
+
 struct Request {
     path: ~str,
     querystring: ~str
@@ -72,8 +72,4 @@ fn main() {
     println(res.contenttype);
     println("");
     println(res.body);
-    println("hello from rust!");
-    println!("path: {:s}", req.path);
-    println!("querystring: {:s}", req.querystring);
-    println("done!");
 }
