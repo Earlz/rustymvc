@@ -91,15 +91,15 @@ impl<T> ControllerBox<T>{
         self.route.path=path;
         self
     }
-    fn with<'r>(&'r mut self, invoker: ~fn(&T)) -> &'r mut ControllerBox<T>{
+    fn with<'r>(&'r mut self, invoker: ~fn(&mut T)) -> &'r mut ControllerBox<T>{
         let tmp=self.creator.take();
         
         self.route.handler = |c| {
             match tmp {
                 None => (),
                 Some(ref t) => {
-                    let ctrl=(*t)(c);
-                    invoker(&ctrl);
+                    let mut ctrl=(*t)(c);
+                    invoker(&mut ctrl);
                 }
             };
         };
@@ -115,6 +115,21 @@ impl Meh{
     fn foo(@mut self
 }
 */
+
+struct TestController{
+    context: ~HttpContext
+}
+
+impl TestController{
+    fn new(c: ~HttpContext) -> TestController{
+        TestController{ context: c}
+    }
+    fn index(&mut self) {
+        self.context.response.body.push_str("test index");
+    }
+}
+
+
 
 fn default_handler(context: &mut HttpContext){
     context.response.body.push_str("404 not found");
@@ -133,7 +148,15 @@ fn main() {
     let mut router=Router::new();
     router.add(Route{path: ~"", handler: index});
     router.add(Route{path: ~"/foo", handler: foo});
+
+    let mut test = router.controller(|c| TestController::new(c));
+    test.handles(~"/test").with(|c| c.index());
+
+
     router.execute(&mut context);
+
+
+
     println(context.response.contenttype);
     println("");
     println(context.response.body);
