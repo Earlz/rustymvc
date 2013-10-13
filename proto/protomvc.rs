@@ -97,8 +97,8 @@ impl<T> ControllerBox<T>{
         self.route.handler = |c| {
             match tmp {
                 None => (),
-                Some(t) => {
-                    let ctrl=(t)(c);
+                Some(ref t) => {
+                    let ctrl=(*t)(c);
                     invoker(&ctrl);
                 }
             };
