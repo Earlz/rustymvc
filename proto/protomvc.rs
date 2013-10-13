@@ -43,7 +43,7 @@ impl Response{
 
 struct Route {
     path: ~str,
-    handler: ~fn(&mut HttpContext)
+    handler: ~fn(@mut HttpContext)
 }
 
 struct Router{
@@ -57,14 +57,14 @@ impl Router{
     fn add(&mut self, r: Route){
         self.routes.push(r);
     }
-    fn execute(&self, c: &mut HttpContext) {
+    fn execute(&self, c: @mut HttpContext) {
         for route in self.routes.iter(){
             if(route.path == c.request.path){
                 (route.handler)(c);
             }
         }
     }
-    fn controller<T>(~self, creator: ~fn(&HttpContext) -> T) -> ControllerBox<T>
+    fn controller<T>(~self, creator: ~fn(@mut HttpContext) -> T) -> ControllerBox<T>
     {
         ControllerBox{
             router: self,
@@ -83,7 +83,7 @@ trait HttpController{
 struct ControllerBox<T>{
     router: ~Router,
     route: ~Route,
-    creator: Option<~fn(&HttpContext) -> T>
+    creator: Option<~fn(@mut HttpContext) -> T>
 }
 
 impl<T> ControllerBox<T>{
@@ -117,11 +117,11 @@ impl Meh{
 */
 
 struct TestController{
-    context: ~HttpContext
+    context: @mut HttpContext
 }
 
 impl TestController{
-    fn new(c: ~HttpContext) -> TestController{
+    fn new(c: @mut HttpContext) -> TestController{
         TestController{ context: c}
     }
     fn index(&mut self) {
@@ -131,29 +131,29 @@ impl TestController{
 
 
 
-fn default_handler(context: &mut HttpContext){
+fn default_handler(context: @mut HttpContext){
     context.response.body.push_str("404 not found");
 }
 
-fn index(context: &mut HttpContext){
+fn index(context: @mut HttpContext){
     context.response.body.push_str("yay index");
 }
 
-fn foo(context: &mut HttpContext){
+fn foo(context: @mut HttpContext){
     context.response.body.push_str("yay foo");
 }
 
 fn main() {
     let mut context=HttpContext::create();
-    let mut router=Router::new();
+    let mut router=~Router::new();
     router.add(Route{path: ~"", handler: index});
     router.add(Route{path: ~"/foo", handler: foo});
 
-    let mut test = router.controller(|c| TestController::new(c));
+    let mut test = @mut router.controller(|c| TestController::new(c));
     test.handles(~"/test").with(|c| c.index());
 
 
-    router.execute(&mut context);
+    router.execute(@mut context);
 
 
 
