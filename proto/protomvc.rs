@@ -94,7 +94,8 @@ impl<T> ControllerBox<T>{
     fn with(@mut self, invoker: ~fn(&mut T)) -> @mut ControllerBox<T>{
         let tmp=self.creator.take();
         
-        let h = |c| {
+        self.router.add(~Route{path: self.route.path.clone(), handler:
+         |c| {
             match tmp {
                 None => (),
                 Some(ref t) => {
@@ -102,8 +103,7 @@ impl<T> ControllerBox<T>{
                     invoker(&mut ctrl);
                 }
             };
-        };
-        self.router.add(~Route{path: self.route.path.clone(), handler:h});
+        }});
         self
     }
 }
