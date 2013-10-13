@@ -43,7 +43,7 @@ impl Response{
 
 struct Route {
     path: ~str,
-    handler: ~fn(&Request, &mut Response)
+    handler: ~fn(&mut HttpContext)
 }
 
 struct Router{
@@ -57,19 +57,19 @@ impl Router{
     fn add(&mut self, r: Route){
         self.routes.push(r);
     }
-    fn execute(&self, req: &Request, res: &mut Response) {
+    fn execute(&self, c: &mut HttpContext) {
         for route in self.routes.iter(){
-            if(route.path == req.path){
-                (route.handler)(req, res);
+            if(route.path == c.request.path){
+                (route.handler)(c);
             }
         }
     }
-    fn controller<T>(@self, creator: ~fn(&HttpContext) -> T) -> ControllerBox<T>
+    fn controller<T>(~self, creator: ~fn(&HttpContext) -> T) -> ControllerBox<T>
     {
         ControllerBox{
             router: self,
             route: ~Route{path: ~"", handler: default_handler},
-            creator: creator
+            creator: Some(creator)
         }
     }
 }
@@ -81,36 +81,60 @@ trait HttpController{
 
 
 struct ControllerBox<T>{
-    router: @Router,
+    router: ~Router,
     route: ~Route,
-    creator: ~fn(&HttpContext) -> T
+    creator: Option<~fn(&HttpContext) -> T>
 }
 
 impl<T> ControllerBox<T>{
-    
+    fn handles(@mut self, path: ~str) -> @mut ControllerBox<T>{
+        self.route.path=path;
+        self
+    }
+    fn with<'r>(&'r mut self, invoker: ~fn(&T)) -> &'r mut ControllerBox<T>{
+        let tmp=self.creator.take();
+        
+        self.route.handler = |c| {
+            match tmp {
+                None => (),
+                Some(t) => {
+                    let ctrl=(t)(c);
+                    invoker(&ctrl);
+                }
+            };
+        };
+        self
+    }
+}
+/*
+struct Meh{
+    biz: ~fn(int) -> int
 }
 
+impl Meh{
+    fn foo(@mut self
+}
+*/
 
-fn default_handler(r: &Request, res: &mut Response){
-    res.body.push_str("404 not found");
+fn default_handler(context: &mut HttpContext){
+    context.response.body.push_str("404 not found");
 }
 
-fn index(r: &Request,res: &mut Response){
-    res.body.push_str("yay index");
+fn index(context: &mut HttpContext){
+    context.response.body.push_str("yay index");
 }
 
-fn foo(r: &Request, res: &mut Response){
-    res.body.push_str("yay foo");
+fn foo(context: &mut HttpContext){
+    context.response.body.push_str("yay foo");
 }
 
 fn main() {
-    let req=Request::populate();
-    let mut res=Response::new();
+    let mut context=HttpContext::create();
     let mut router=Router::new();
     router.add(Route{path: ~"", handler: index});
     router.add(Route{path: ~"/foo", handler: foo});
-    router.execute(&req, &mut res);
-    println(res.contenttype);
+    router.execute(&mut context);
+    println(context.response.contenttype);
     println("");
-    println(res.body);
+    println(context.response.body);
 }
