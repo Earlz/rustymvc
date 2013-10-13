@@ -1,5 +1,19 @@
 use std::os::getenv;
 
+struct HttpContext{
+    request: Request,
+    response: Response
+}
+
+impl HttpContext{
+    fn create() -> HttpContext{
+        HttpContext{
+            request: Request::populate(),
+            response: Response::new()
+        }
+    }
+}
+
 struct Request {
     path: ~str,
     querystring: ~str
@@ -32,13 +46,13 @@ struct Route {
     handler: ~fn(&Request, &mut Response)
 }
 
-struct RouteList{
+struct Router{
     routes: ~[Route],
 }
 
-impl RouteList{
-    fn new() -> RouteList{
-        RouteList{routes: ~[]}
+impl Router{
+    fn new() -> Router{
+        Router{routes: ~[]}
     }
     fn add(&mut self, r: Route){
         self.routes.push(r);
@@ -50,9 +64,36 @@ impl RouteList{
             }
         }
     }
-
+    fn controller<T>(@self, creator: ~fn(&HttpContext) -> T) -> ControllerBox<T>
+    {
+        ControllerBox{
+            router: self,
+            route: ~Route{path: ~"", handler: default_handler},
+            creator: creator
+        }
+    }
 }
 
+
+trait HttpController{
+    
+}
+
+
+struct ControllerBox<T>{
+    router: @Router,
+    route: ~Route,
+    creator: ~fn(&HttpContext) -> T
+}
+
+impl<T> ControllerBox<T>{
+    
+}
+
+
+fn default_handler(r: &Request, res: &mut Response){
+    res.body.push_str("404 not found");
+}
 
 fn index(r: &Request,res: &mut Response){
     res.body.push_str("yay index");
@@ -65,10 +106,10 @@ fn foo(r: &Request, res: &mut Response){
 fn main() {
     let req=Request::populate();
     let mut res=Response::new();
-    let mut routes=RouteList::new();
-    routes.add(Route{path: ~"", handler: index});
-    routes.add(Route{path: ~"/foo", handler: foo});
-    routes.execute(&req, &mut res);
+    let mut router=Router::new();
+    router.add(Route{path: ~"", handler: index});
+    router.add(Route{path: ~"/foo", handler: foo});
+    router.execute(&req, &mut res);
     println(res.contenttype);
     println("");
     println(res.body);
