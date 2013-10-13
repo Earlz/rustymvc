@@ -54,8 +54,8 @@ impl Router{
     fn new() -> Router{
         Router{routes: ~[]}
     }
-    fn add(&mut self, r: Route){
-        self.routes.push(r);
+    fn add(&mut self, r: ~Route){
+        self.routes.push(*r);
     }
     fn execute(&self, c: @mut HttpContext) {
         for route in self.routes.iter(){
@@ -64,7 +64,7 @@ impl Router{
             }
         }
     }
-    fn controller<T>(~self, creator: ~fn(@mut HttpContext) -> T) -> ControllerBox<T>
+    fn controller<T>(@mut self, creator: ~fn(@mut HttpContext) -> T) -> ControllerBox<T>
     {
         ControllerBox{
             router: self,
@@ -81,7 +81,7 @@ trait HttpController{
 
 
 struct ControllerBox<T>{
-    router: ~Router,
+    router: @mut Router,
     route: ~Route,
     creator: Option<~fn(@mut HttpContext) -> T>
 }
@@ -91,10 +91,10 @@ impl<T> ControllerBox<T>{
         self.route.path=path;
         self
     }
-    fn with<'r>(&'r mut self, invoker: ~fn(&mut T)) -> &'r mut ControllerBox<T>{
+    fn with(@mut self, invoker: ~fn(&mut T)) -> @mut ControllerBox<T>{
         let tmp=self.creator.take();
         
-        self.route.handler = |c| {
+        let h = |c| {
             match tmp {
                 None => (),
                 Some(ref t) => {
@@ -103,6 +103,7 @@ impl<T> ControllerBox<T>{
                 }
             };
         };
+        self.router.add(~Route{path: self.route.path.clone(), handler:h});
         self
     }
 }
@@ -144,20 +145,20 @@ fn foo(context: @mut HttpContext){
 }
 
 fn main() {
-    let mut context=HttpContext::create();
-    let mut router=~Router::new();
-    router.add(Route{path: ~"", handler: index});
-    router.add(Route{path: ~"/foo", handler: foo});
+    let mut context=@mut HttpContext::create();
+    let mut router=@mut Router::new();
+    router.add(~Route{path: ~"", handler: index});
+    router.add(~Route{path: ~"/foo", handler: foo});
 
     let mut test = @mut router.controller(|c| TestController::new(c));
     test.handles(~"/test").with(|c| c.index());
 
 
-    router.execute(@mut context);
+    router.execute(context);
 
 
 
     println(context.response.contenttype);
     println("");
-    println(context.response.body);
+    println(context.response.body); 
 }
