@@ -1,4 +1,5 @@
 use std::os::getenv;
+use std::rc::RcMut;
 
 struct HttpContext{
     request: Request,
@@ -43,12 +44,13 @@ impl Response{
 
 struct Route {
     path: ~str,
-    handler: ~fn(@mut HttpContext)
+    handler: ~fn(&mut ControllerContext)
 }
 
 struct Router{
     routes: ~[Route],
 }
+
 
 impl Router{
     fn new() -> Router{
@@ -57,14 +59,14 @@ impl Router{
     fn add(&mut self, r: ~Route){
         self.routes.push(*r);
     }
-    fn execute(&self, c: @mut HttpContext) {
+    fn execute(&mut self, c: &mut HttpContext) {
         for route in self.routes.iter(){
             if(route.path == c.request.path){
-                (route.handler)(c);
+                (route.handler)(&mut ControllerContext{http: c, router: self});
             }
         }
     }
-    fn controller<T>(@mut self, creator: ~fn(@mut HttpContext) -> T) -> ControllerBox<T>
+    fn controller<'r,T>(&'r mut self, creator: ~fn(&mut ControllerContext) -> T) -> ControllerBox<'r,T>
     {
         ControllerBox{
             router: self,
@@ -75,23 +77,30 @@ impl Router{
 }
 
 
+struct ControllerContext<'self>
+{
+    http: &'self mut HttpContext,
+    router: &'self Router
+}
+
+
 trait HttpController{
     
 }
 
 
-struct ControllerBox<T>{
-    router: @mut Router,
+struct ControllerBox<'self,T>{
+    router: &'self mut Router,
     route: ~Route,
-    creator: Option<~fn(@mut HttpContext) -> T>
+    creator: Option<~fn(&mut ControllerContext) -> T>
 }
 
-impl<T> ControllerBox<T>{
-    fn handles(@mut self, path: ~str) -> @mut ControllerBox<T>{
+impl<'self,T> ControllerBox<'self,T>{
+    fn handles(&'self mut self, path: ~str) -> &'self mut ControllerBox<'self,T>{
         self.route.path=path;
         self
     }
-    fn with(@mut self, invoker: ~fn(&mut T)) -> @mut ControllerBox<T>{
+    fn with(&'self mut self, invoker: ~fn(&mut T, &mut ControllerContext)) -> &'self mut ControllerBox<'self,T>{
         let tmp=self.creator.take();
         
         self.router.add(~Route{path: self.route.path.clone(), handler:
@@ -100,7 +109,7 @@ impl<T> ControllerBox<T>{
                 None => (),
                 Some(ref t) => {
                     let mut ctrl=(*t)(c);
-                    invoker(&mut ctrl);
+                    invoker(&mut ctrl, c);
                 }
             };
         }});
@@ -117,44 +126,42 @@ impl Meh{
 }
 */
 
-struct TestController{
-    context: @mut HttpContext
-}
+struct TestController;
 
 impl TestController{
-    fn new(c: @mut HttpContext) -> TestController{
-        TestController{ context: c}
+    fn new() -> TestController{
+    TestController
     }
-    fn index(&mut self) {
-        self.context.response.body.push_str("test index");
+    fn index(&mut self, context: &mut ControllerContext) {
+        context.http.response.body.push_str("test index");
     }
 }
 
 
 
-fn default_handler(context: @mut HttpContext){
-    context.response.body.push_str("404 not found");
+fn default_handler(context: &mut ControllerContext){
+    context.http.response.body.push_str("404 not found");
 }
 
-fn index(context: @mut HttpContext){
-    context.response.body.push_str("yay index");
+fn index(context: &mut ControllerContext){
+    context.http.response.body.push_str("yay index");
 }
 
-fn foo(context: @mut HttpContext){
-    context.response.body.push_str("yay foo");
+fn foo(context: &mut ControllerContext){
+    context.http.response.body.push_str("yay foo");
 }
 
 fn main() {
-    let mut context=@mut HttpContext::create();
-    let mut router=@mut Router::new();
+    let mut context=HttpContext::create();
+    let mut router=Router::new();
     router.add(~Route{path: ~"", handler: index});
     router.add(~Route{path: ~"/foo", handler: foo});
+    {
+        let mut test = router.controller(|c| TestController::new()); 
+        test.handles(~"/test").with(|c,ctx| c.index(ctx));
+    }
 
-    let mut test = @mut router.controller(|c| TestController::new(c));
-    test.handles(~"/test").with(|c| c.index());
-
-
-    router.execute(context);
+    router.execute(&mut context); //possible borrowing more than once
 
 
 
