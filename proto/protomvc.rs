@@ -159,7 +159,7 @@ fn main() {
     router.add(~Route{path: ~"", handler: index});
     router.add(~Route{path: ~"/foo", handler: foo});
     {
-        let mut test = router.controller(|c| TestController::new()); 
+        let mut test = router.controller(|_| TestController::new()); 
         test.handles(~"/test").with(|c,ctx| c.index(ctx));
     }
 

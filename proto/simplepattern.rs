@@ -16,8 +16,8 @@ impl ParameterDictionary {
     }
 }
 impl Index<~str, ~str> for ParameterDictionary {
-    fn index(&self, _rhs: &~str) -> ~str {
-        self.params.get(_rhs).head().clone()
+    fn index(&self, rhs: &~str) -> ~str {
+        self.params.get(rhs).head().clone()
     }
 }
 
