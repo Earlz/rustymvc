@@ -21,5 +21,33 @@ impl Index<~str, ~str> for ParameterDictionary {
     }
 }
 
+pub trait PatternMatcher { 
+    fn matches(&self, input: &str) -> MatchResult;
+}
+
+
+struct MatchResult { 
+    matches: bool,
+    params: ParameterDictionary
+}
+
+
+struct SimplePattern {
+    pattern: ~str,
+}
+
+impl SimplePattern {
+    fn new(pattern: &str) -> SimplePattern {
+        SimplePattern { pattern: pattern.into_owned()}
+    }
+}
+
+
+impl PatternMatcher for SimplePattern {
+    fn matches(&self, input: &str) -> MatchResult {
+        MatchResult{matches: false, params: ParameterDictionary::new()}
+    }
+}
+
 
 
