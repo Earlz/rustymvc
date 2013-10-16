@@ -1,6 +1,8 @@
 use std::os::getenv;
 use std::rc::RcMut;
 
+pub mod simplepattern;
+
 struct HttpContext{
     request: Request,
     response: Response
