@@ -27,12 +27,12 @@ pub trait PatternMatcher {
 
 
 struct MatchResult { 
-    matches: bool,
+    is_match: bool,
     params: ParameterDictionary
 }
 
 
-struct SimplePattern {
+pub struct SimplePattern {
     pattern: ~str,
 }
 
@@ -45,7 +45,8 @@ impl SimplePattern {
 
 impl PatternMatcher for SimplePattern {
     fn matches(&self, input: &str) -> MatchResult {
-        MatchResult{matches: false, params: ParameterDictionary::new()}
+        let res=input == self.pattern;
+        MatchResult{is_match: res, params: ParameterDictionary::new()}
     }
 }
 
