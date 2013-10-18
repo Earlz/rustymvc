@@ -58,11 +58,10 @@ impl MatchResult {
 */
 
 priv struct PatternGroup{
-    name: Option<~str>,
-    text: Option<~str>,
+    name: ~str,
+    text: ~str,
     valid_values: ~[~str],
     match_all: bool,
-    end: char,
 }
 
 
@@ -77,26 +76,41 @@ impl SimplePattern {
     }
     /*This will update the "groups", which is basically a way to pre-cache and break apart the important parts of the pattern*/
     fn update_groups(&mut self){
-        let mut i=0;
-        let p=&self.pattern.clone(); //might be mut?
-        for c in p.iter() {
-            if(c == '{') {
+        for g in self.pattern.split_iter('/') {
+            if(g.char_at(0) == '[') {
+                //group
                 
+            }else{
+                //just text
+                self.groups.push(PatternGroup{ 
+                    name: ~"",
+                    text: g.into_owned(),
+                    valid_values: ~[],
+                    match_all: false,
+                });
             }
         }
-        /*while(i<p.len()){
-            if(p[i] == '{'){
-            
-            }
-            i+=1;
-        }*/
     }
 }
 
 
 impl PatternMatcher for SimplePattern {
     fn matches(&self, input: &str) -> MatchResult {
-        let res=input == self.pattern;
+        let mut res=input == self.pattern;
+        //if(input.split_iter('/').len() != 
+        if !res {
+            for (inp,pat) in input.split_iter('/').zip(self.groups.iter()) {
+                if(pat.name == ~""){
+                    //just a raw match
+                    if(inp == pat.text) {
+                        res=true;
+                        break;
+                    }
+                }
+                
+            }
+            
+        }
         MatchResult{is_match: res, params: ParameterDictionary::new()}
     }
 

@@ -7,10 +7,14 @@ use simplepattern::SimplePattern;
 fn root_url_matches_only_root() {
     let p=SimplePattern::new("/");
     assert!(p.matches("/").is_match);
-/*
-var x=new SimplePattern("/");
-            Assert.IsTrue(x.Match("/").IsMatch);
-            Assert.IsFalse(x.Match("/foo/bar").IsMatch);
-            Assert.IsFalse(x.Match("/123").IsMatch);
-*/
+}
+
+#[test]
+fn raw_routes_match_urls() {
+    let p=SimplePattern::new("/foo/bar");
+    assert!(p.matches("/foo/bar").is_match);
+    assert!(p.matches("/foo/bar/").is_match);
+    assert!(!p.matches("/biz/bar").is_match);
+    assert!(!p.matches("/foo/bar/baz").is_match);
+    assert!(!p.matches("/").is_match);
 }
