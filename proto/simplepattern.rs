@@ -72,11 +72,13 @@ pub struct SimplePattern {
 
 impl SimplePattern {
     fn new(pattern: &str) -> SimplePattern {
-        SimplePattern { pattern: pattern.into_owned(), groups: ~[]}
+        let mut x=SimplePattern { pattern: pattern.into_owned(), groups: ~[]};
+        x.update_groups();
+        x
     }
     /*This will update the "groups", which is basically a way to pre-cache and break apart the important parts of the pattern*/
     fn update_groups(&mut self){
-        for g in self.pattern.split_iter('/') {
+        for g in self.pattern.split_iter('/').filter(|x| !x.is_empty()) {
             if(g.char_at(0) == '[') {
                 //group
                 
@@ -96,7 +98,7 @@ impl SimplePattern {
 
 impl PatternMatcher for SimplePattern {
     fn matches(&self, input: &str) -> MatchResult {
-        let mut parts=input.split_iter('/').filter(|x| *x!="");
+        let parts=input.split_iter('/').filter(|x| !x.is_empty()).to_owned_vec();
         let mut res=false; //input == self.pattern;
         if(parts.len() == 0 && self.groups.len() ==0 ){
             return MatchResult::a_match(ParameterDictionary::new());
@@ -104,16 +106,32 @@ impl PatternMatcher for SimplePattern {
         if(parts.len() < self.groups.len()){
             return MatchResult::no_match();
         }
+        println!("{0:u} {1:u}",parts.len(), self.groups.len());
+        
         //if(input.split_iter('/').len() != 
-        for (inp,pat) in parts.zip(self.groups.iter()) {
+        res=true;
+        let mut ran=false;
+        let mut i=0;
+        for inp in parts.iter() {
+            ran=true;
+            if(i >= self.groups.len()){
+                return MatchResult::no_match();
+            }
+            let pat=&self.groups[i];
+            println(*inp);
+            println(pat.text);
             if(pat.name == ~""){
                 //just a raw match
-                if(inp == pat.text) {
-                    res=true;
+                if(*inp != pat.text) {
+                    res=false;
                     break;
                 }
             }
-            
+            i+=1;
+        }
+        if(ran == false)
+        {
+            res=true;
         }
         MatchResult{is_match: res, params: ParameterDictionary::new()}
     }
