@@ -18,3 +18,9 @@ fn raw_routes_match_urls() {
     assert!(!p.matches("/foo/bar/baz").is_match);
     assert!(!p.matches("/").is_match);
 }
+
+#[test]
+fn route_raw_text_doesnt_always_match_url() {
+    let p=SimplePattern::new("/foo/[bar]/[biz=foo]");
+    assert!(!p.matches("/foo/[bar]/[biz=foo]").is_match);
+}
