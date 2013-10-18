@@ -7,6 +7,8 @@ use simplepattern::SimplePattern;
 fn root_url_matches_only_root() {
     let p=SimplePattern::new("/");
     assert!(p.matches("/").is_match);
+    assert!(!p.matches("/foo").is_match);
+    assert!(!p.matches("/foo/bar").is_match);
 }
 
 #[test]

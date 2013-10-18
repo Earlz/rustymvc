@@ -96,18 +96,22 @@ impl SimplePattern {
 
 impl PatternMatcher for SimplePattern {
     fn matches(&self, input: &str) -> MatchResult {
-        let mut res=input == self.pattern;
+        let mut parts=input.split_iter('/').filter(|x| *x!="");
+        let mut res=false; //input == self.pattern;
+        if(parts.len() == 0 && self.groups.len() ==0 ){
+            return MatchResult::a_match(ParameterDictionary::new());
+        }
+        if(parts.len() < self.groups.len()){
+            return MatchResult::no_match();
+        }
         //if(input.split_iter('/').len() != 
-        if !res {
-            for (inp,pat) in input.split_iter('/').zip(self.groups.iter()) {
-                if(pat.name == ~""){
-                    //just a raw match
-                    if(inp == pat.text) {
-                        res=true;
-                        break;
-                    }
+        for (inp,pat) in parts.zip(self.groups.iter()) {
+            if(pat.name == ~""){
+                //just a raw match
+                if(inp == pat.text) {
+                    res=true;
+                    break;
                 }
-                
             }
             
         }
