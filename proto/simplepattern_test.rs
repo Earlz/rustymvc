@@ -22,6 +22,15 @@ fn raw_routes_match_urls() {
 }
 
 #[test]
+fn named_route_params_match_anything() {
+    let p=SimplePattern::new("/foo/[bar]");
+    assert!(p.matches("/foo/biz").is_match);
+    assert!(p.matches("/foo/baz").params[~"bar"] == ~"baz");
+    assert!(!p.matches("/meh/bar").is_match);
+    assert!(!p.matches("/foo/baz/biz").is_match);
+}
+
+#[test]
 fn route_raw_text_doesnt_always_match_url() {
     let p=SimplePattern::new("/foo/[bar]/[biz=foo]");
     assert!(!p.matches("/foo/[bar]/[biz=foo]").is_match);
