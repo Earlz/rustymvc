@@ -1,11 +1,14 @@
 use std::os::getenv;
 use std::rc::RcMut;
 
-pub mod simplepattern;
+use simplepattern::ParameterDictionary;
+use simplepattern::SimplePattern;
+use simplepattern::PatternMatcher;
 
+pub mod simplepattern;
 struct HttpContext{
     request: Request,
-    response: Response
+    response: Response,
 }
 
 impl HttpContext{
@@ -45,7 +48,7 @@ impl Response{
 
 
 struct Route {
-    path: ~str,
+    matcher: ~PatternMatcher,
     handler: ~fn(&mut ControllerContext)
 }
 
@@ -63,16 +66,20 @@ impl Router{
     }
     fn execute(&mut self, c: &mut HttpContext) {
         for route in self.routes.iter(){
-            if(route.path == c.request.path){
-                (route.handler)(&mut ControllerContext{http: c, router: self});
+            let res=route.matcher.matches(c.request.path);
+            
+            if(res.is_match){
+                (route.handler)(&mut ControllerContext{http: c, router: self, route_params: res.params});
+                return;
             }
         }
+        default_handler(&mut ControllerContext{http: c, router: self, route_params: ParameterDictionary::new()});
     }
     fn controller<'r,T>(&'r mut self, creator: ~fn(&mut ControllerContext) -> T) -> ControllerBox<'r,T>
     {
         ControllerBox{
             router: self,
-            route: ~Route{path: ~"", handler: default_handler},
+            path: ~"",
             creator: Some(creator)
         }
     }
@@ -82,7 +89,8 @@ impl Router{
 struct ControllerContext<'self>
 {
     http: &'self mut HttpContext,
-    router: &'self Router
+    router: &'self Router,
+    route_params: ParameterDictionary
 }
 
 
@@ -93,19 +101,19 @@ trait HttpController{
 
 struct ControllerBox<'self,T>{
     router: &'self mut Router,
-    route: ~Route,
+    path: ~str,
     creator: Option<~fn(&mut ControllerContext) -> T>
 }
 
 impl<'self,T> ControllerBox<'self,T>{
     fn handles(&'self mut self, path: ~str) -> &'self mut ControllerBox<'self,T>{
-        self.route.path=path;
+        self.path=path;
         self
     }
     fn with(&'self mut self, invoker: ~fn(&mut T, &mut ControllerContext)) -> &'self mut ControllerBox<'self,T>{
         let tmp=self.creator.take();
         
-        self.router.add(~Route{path: self.route.path.clone(), handler:
+        self.router.add(~Route{matcher: ~SimplePattern::new(self.path) as ~PatternMatcher, handler:
          |c| {
             match tmp {
                 None => (),
@@ -156,8 +164,6 @@ fn foo(context: &mut ControllerContext){
 fn main() {
     let mut context=HttpContext::create();
     let mut router=Router::new();
-    router.add(~Route{path: ~"", handler: index});
-    router.add(~Route{path: ~"/foo", handler: foo});
     {
         let mut test = router.controller(|_| TestController::new()); 
         test.handles(~"/test").with(|c,ctx| c.index(ctx));

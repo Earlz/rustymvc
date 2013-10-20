@@ -2,12 +2,12 @@ use std::hashmap::HashMap;
 mod simplepattern_test;
 
 
-struct ParameterDictionary { 
+pub struct ParameterDictionary { 
     params: HashMap<~str, ~[~str]> 
 }
 
 impl ParameterDictionary { 
-    fn new() -> ParameterDictionary {
+    pub fn new() -> ParameterDictionary {
         ParameterDictionary{params: HashMap::new()}
     }
     fn push(&mut self, key: &str, value: &str) {
@@ -57,7 +57,7 @@ pub struct SimplePattern {
 }
 
 impl SimplePattern {
-    fn new(pattern: &str) -> SimplePattern {
+    pub fn new(pattern: &str) -> SimplePattern {
         let mut x=SimplePattern { pattern: pattern.into_owned(), groups: ~[]};
         x.update_groups();
         x
@@ -72,7 +72,6 @@ impl SimplePattern {
                     //self.groups.push(PatternGroup{
                         
                 }else{
-                    println("fuck");
                     //just name
                     self.groups.push(PatternGroup{
                         name: g.trim_chars(&'[').trim_chars(&']').to_owned(),
