@@ -168,7 +168,7 @@ fn main() {
         test.handles(~"/say/[message]").with(|c,ctx| c.say(ctx));
     }
 
-    router.execute(&mut context); //possible borrowing more than once
+    router.execute(&mut context); 
 
 
 
