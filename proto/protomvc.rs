@@ -145,6 +145,9 @@ impl TestController{
     fn index(&mut self, context: &mut ControllerContext) {
         context.http.response.body.push_str("test index");
     }
+    fn say(&mut self, context: &mut ControllerContext) {
+        context.http.response.body.push_str(context.route_params[~"message"]);
+    }
 }
 
 
@@ -153,20 +156,16 @@ fn default_handler(context: &mut ControllerContext){
     context.http.response.body.push_str("404 not found");
 }
 
-fn index(context: &mut ControllerContext){
-    context.http.response.body.push_str("yay index");
-}
-
-fn foo(context: &mut ControllerContext){
-    context.http.response.body.push_str("yay foo");
-}
-
 fn main() {
     let mut context=HttpContext::create();
     let mut router=Router::new();
     {
         let mut test = router.controller(|_| TestController::new()); 
         test.handles(~"/test").with(|c,ctx| c.index(ctx));
+    }
+    {
+        let mut test = router.controller(|_| TestController::new()); 
+        test.handles(~"/say/[message]").with(|c,ctx| c.say(ctx));
     }
 
     router.execute(&mut context); //possible borrowing more than once
