@@ -10,7 +10,7 @@ impl ParameterDictionary {
     fn new() -> ParameterDictionary {
         ParameterDictionary{params: HashMap::new()}
     }
-    fn add(&mut self, key: &str, value: &str) {
+    fn push(&mut self, key: &str, value: &str) {
         let v=self.params.find_or_insert(key.into_owned(), ~[]);
         v.push(value.into_owned());
     }
@@ -42,20 +42,6 @@ impl MatchResult {
 
 
 
-/*
-        private List<Group> Groups;
-        
-        private class Group {
-            public string ParamName;
-            public string Text;
-            public bool IsParam=false;
-            public List<string> ValidMatches=new List<string>();
-            public bool MatchAll=true;
-            public bool Optional=false;
-            public char End;
-            public Regex MatchType=null;
-        }
-*/
 
 priv struct PatternGroup{
     name: ~str,
@@ -81,6 +67,20 @@ impl SimplePattern {
         for g in self.pattern.split_iter('/').filter(|x| !x.is_empty()) {
             if(g.char_at(0) == '[') {
                 //group
+                if(g.iter().any(|x| x=='=')) {
+                    //let 
+                    //self.groups.push(PatternGroup{
+                        
+                }else{
+                    println("fuck");
+                    //just name
+                    self.groups.push(PatternGroup{
+                        name: g.trim_chars(&'[').trim_chars(&']').to_owned(),
+                        text: ~"",
+                        valid_values: ~[~"*"],
+                        match_all: false
+                    });
+                }
                 
             }else{
                 //just text
@@ -106,26 +106,26 @@ impl PatternMatcher for SimplePattern {
         if(parts.len() < self.groups.len()){
             return MatchResult::no_match();
         }
-        println!("{0:u} {1:u}",parts.len(), self.groups.len());
         
         //if(input.split_iter('/').len() != 
         res=true;
         let mut ran=false;
         let mut i=0;
+        let mut params=ParameterDictionary::new();
         for inp in parts.iter() {
             ran=true;
             if(i >= self.groups.len()){
                 return MatchResult::no_match();
             }
             let pat=&self.groups[i];
-            println(*inp);
-            println(pat.text);
             if(pat.name == ~""){
                 //just a raw match
                 if(*inp != pat.text) {
                     res=false;
                     break;
                 }
+            }else{
+                params.push(pat.name, *inp);
             }
             i+=1;
         }
@@ -133,93 +133,7 @@ impl PatternMatcher for SimplePattern {
         {
             res=true;
         }
-        MatchResult{is_match: res, params: ParameterDictionary::new()}
+        MatchResult{is_match: res, params: params}
     }
 
 }
-
-
-/*
- /** This will parse the Pattern string one group at a time. **
-        int ParseParam (int start, ref Group g)
-        {
-            start++;
-            
-            int end=Pattern.Substring(start).IndexOf('}')+start;
-            if(end+1>=Pattern.Length-1){
-                g.End='\0';
-            }else{
-                g.End=Pattern[end+1];
-            }
-            string p=CutString(Pattern,start,end);
-            g.Text=p;
-            int tmp=p.IndexOf('[');
-            if(tmp==-1){ //not found. Just trim it up and get the paramname
-                p=p.Trim();
-                if(p=="*"){
-                    g.Optional=true; //meh. Still add it as a match-all group for the hell of it
-                }
-                g.MatchAll=true;
-            }else{
-                //return end;
-                g.MatchAll=false;
-                string l=CutString(p,tmp+1,p.IndexOf(']'));
-                l=l.Replace(" ","");
-                p=p.Substring(0,p.IndexOf("=")).Trim();
-                int count=0;
-                while(true){
-                    if(l.Length==0){
-                        break;
-                    }
-                    int endm=l.IndexOf(',');
-                    if(endm==-1){
-                        endm=l.Length;
-                        g.ValidMatches.Add(l);
-                        break;
-                    }
-                    g.ValidMatches.Add(l.Remove(endm));
-                    l=l.Substring(endm+1);
-                    count++;
-                    if(count>100){
-                        throw new ApplicationException("inifinite loop detected");
-                    }
-                }
-            }
-            
-            g.ParamName=p;
-            return end;
-        }
-     /** This will update all of the "groups" or parameter names/values for the pattern string. *
-        private void UpdateGroups ()
-        {
-            List<Group> groups = new List<Group> ();
-            Group g=new Group();
-            for(int i=0;i<Pattern.Length;i++){
-                if(Pattern[i]=='{'){ 
-                    if(g!=null) //g will never be null
-                        groups.Add(g);
-                    g=new Group();
-                    g.IsParam=true;
-                    i=ParseParam(i,ref g);
-                    groups.Add(g);
-                    g=null;
-                }else if(g==null){
-                    g=new Group();
-                    g.IsParam=false;
-                    g.Text+=Pattern[i];
-                }else{
-                    g.Text+=Pattern[i];
-                }
-            }
-            if(g!=null){
-                groups.Add(g);
-            }
-            Groups=groups;
-        }
-    a}
-        /**Little helper method to cut a string from start to end point. Just shorter than typing .Remove(end).Substring(start) **
-        private string CutString(string s,int start,int end){
-            return s.Remove(end).Substring(start);
-        }
-*/
-
