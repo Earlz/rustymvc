@@ -2,7 +2,7 @@ use simplepattern::ParameterDictionary;
 use simplepattern::SimplePattern;
 use simplepattern::PatternMatcher;
 
-struct HttpContext{
+pub struct HttpContext{
     request: Request,
     response: Response,
 }
@@ -10,42 +10,42 @@ struct HttpContext{
 impl HttpContext{
 }
 
-struct Request {
+pub struct Request {
     path: ~str,
     querystring: ~str
 }
 
 
-struct Response{
+pub struct Response{
     contenttype: ~str,
     body: ~str
 }
 
 impl Response{
-    fn new() -> Response{
+    pub fn new() -> Response{
         Response{contenttype: ~"text/html", body: ~""}
     }
 }
 
 
-struct Route {
+pub struct Route {
     matcher: ~PatternMatcher,
     handler: ~fn(&mut ControllerContext)
 }
 
-struct Router{
+pub struct Router{
     routes: ~[Route],
 }
 
 
 impl Router{
-    fn new() -> Router{
+    pub fn new() -> Router{
         Router{routes: ~[]}
     }
-    fn add(&mut self, r: ~Route){
+    pub fn add(&mut self, r: ~Route){
         self.routes.push(*r);
     }
-    fn execute(&mut self, c: &mut HttpContext) {
+    pub fn execute(&mut self, c: &mut HttpContext) {
         for route in self.routes.iter(){
             let res=route.matcher.matches(c.request.path);
             
@@ -56,7 +56,7 @@ impl Router{
         }
         default_handler(&mut ControllerContext{http: c, router: self, route_params: ParameterDictionary::new()});
     }
-    fn controller<'r,T>(&'r mut self, creator: ~fn(&mut ControllerContext) -> T) -> ControllerBox<'r,T>
+    pub fn controller<'r,T>(&'r mut self, creator: ~fn(&mut ControllerContext) -> T) -> ControllerBox<'r,T>
     {
         ControllerBox{
             router: self,
@@ -67,7 +67,7 @@ impl Router{
 }
 
 
-struct ControllerContext<'self>
+pub struct ControllerContext<'self>
 {
     http: &'self mut HttpContext,
     router: &'self Router,
@@ -75,23 +75,23 @@ struct ControllerContext<'self>
 }
 
 
-trait HttpController{
+pub trait HttpController{
     
 }
 
 
-struct ControllerBox<'self,T>{
+pub struct ControllerBox<'self,T>{
     router: &'self mut Router,
     path: ~str,
     creator: Option<~fn(&mut ControllerContext) -> T>
 }
 
 impl<'self,T> ControllerBox<'self,T>{
-    fn handles(&'self mut self, path: ~str) -> &'self mut ControllerBox<'self,T>{
+    pub fn handles(&'self mut self, path: ~str) -> &'self mut ControllerBox<'self,T>{
         self.path=path;
         self
     }
-    fn with(&'self mut self, invoker: ~fn(&mut T, &mut ControllerContext)) -> &'self mut ControllerBox<'self,T>{
+    pub fn with(&'self mut self, invoker: ~fn(&mut T, &mut ControllerContext)) -> &'self mut ControllerBox<'self,T>{
         let tmp=self.creator.take();
         
         self.router.add(~Route{matcher: ~SimplePattern::new(self.path) as ~PatternMatcher, handler:
