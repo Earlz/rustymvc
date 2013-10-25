@@ -1,11 +1,7 @@
-use std::os::getenv;
-use std::rc::RcMut;
-
 use simplepattern::ParameterDictionary;
 use simplepattern::SimplePattern;
 use simplepattern::PatternMatcher;
 
-pub mod simplepattern;
 struct HttpContext{
     request: Request,
     response: Response,

@@ -13,3 +13,4 @@
 extern mod extra;
 
 pub mod simplepattern;
+pub mod router;
