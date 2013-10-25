@@ -98,7 +98,7 @@ impl SimplePattern {
 impl PatternMatcher for SimplePattern {
     fn matches(&self, input: &str) -> MatchResult {
         let parts=input.split_iter('/').filter(|x| !x.is_empty()).to_owned_vec();
-        let mut res=false; //input == self.pattern;
+        let mut res;
         if(parts.len() == 0 && self.groups.len() ==0 ){
             return MatchResult::a_match(ParameterDictionary::new());
         }

@@ -1,5 +1,3 @@
-use simplepattern;
-
 use simplepattern::SimplePattern;
 
 

@@ -12,12 +12,6 @@ struct HttpContext{
 }
 
 impl HttpContext{
-    fn create() -> HttpContext{
-        HttpContext{
-            request: Request::populate(),
-            response: Response::new()
-        }
-    }
 }
 
 struct Request {
@@ -26,15 +20,6 @@ struct Request {
 }
 
 
-impl Request {
-    fn populate() -> Request {
-        Request{
-            path: getenv("PATH_INFO").unwrap_or(~""),
-            querystring: getenv("QUERY_STRING").unwrap_or(~"")
-        }
-    }
-}
-
 struct Response{
     contenttype: ~str,
     body: ~str
@@ -42,7 +27,7 @@ struct Response{
 
 impl Response{
     fn new() -> Response{
-        Response{contenttype: ~"text/plain", body: ~""}
+        Response{contenttype: ~"text/html", body: ~""}
     }
 }
 
@@ -135,7 +120,7 @@ impl Meh{
     fn foo(@mut self
 }
 */
-
+/*
 struct TestController;
 
 impl TestController{
@@ -149,7 +134,7 @@ impl TestController{
         context.http.response.body.push_str(context.route_params[~"message"]);
     }
 }
-
+*/
 
 
 fn default_handler(context: &mut ControllerContext){
