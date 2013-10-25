@@ -3,15 +3,15 @@
 default: build
 
 prep:
-	mkdir -p bin
+	mkdir -p build
 
 build: prep
-	rustc src/librustymvc/lib.rs --out-dir=bin
-
+	rustc src/librustymvc/lib.rs --out-dir=build
+	
 test: prep
-	rustc --test src/librustymvc/lib.rs -o bin/rustymvctest
-	bin/rustymvctest
+	rustc --test src/librustymvc/lib.rs -o build/rustymvctest
+	build/rustymvctest
 
 clean:
-	rm -rf bin
+	rm -rf build
 

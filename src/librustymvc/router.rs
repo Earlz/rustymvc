@@ -155,7 +155,7 @@ impl TestController{
 fn default_handler(context: &mut ControllerContext){
     context.http.response.body.push_str("404 not found");
 }
-
+/*
 fn main() {
     let mut context=HttpContext::create();
     let mut router=Router::new();
@@ -176,3 +176,4 @@ fn main() {
     println("");
     println(context.response.body); 
 }
+*/
