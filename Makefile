@@ -1,7 +1,17 @@
+#todo: make this better. ugh
 
-RUST ?= rust
-RUSTC ?= rustc
-RUSTFLAGS ?= -O -Z debug-info
-VERSION=0.1-pre
+default: build
 
+prep:
+	mkdir -p bin
+
+build: prep
+	rustc src/librustymvc/lib.rs --out-dir=bin
+
+test: prep
+	rustc --test src/librustymvc/lib.rs -o bin/rustymvctest
+	bin/rustymvctest
+
+clean:
+	rm -rf bin
 
