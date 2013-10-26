@@ -5,10 +5,9 @@ extern mod http;
 
 use std::rt::io::net::ip::{SocketAddr, Ipv4Addr};
 use std::rt::io::Writer;
-use extra::time;
 use extra::arc::Arc;
 
-use http::server::{Config, Server, ServerUtil, Request, ResponseWriter};
+use http::server::{Config, Server, ServerUtil, ResponseWriter};
 use http::server::request::RequestUri;
 use http::headers::content_type::MediaType;
 
@@ -37,7 +36,6 @@ impl MvcServer {
             test.handles(~"/say/[message]").with(|c,ctx| c.say(ctx));
         }
         return router;
-    //router.execute(&mut context); 
     }
 }
 
@@ -48,21 +46,13 @@ impl Server for MvcServer {
 
     fn handle_request(&self, r: &http::server::Request, w: &mut ResponseWriter) {
         let mut c=context(r);
-        let mut tmp = &mut self.router.clone();
+        let tmp = &mut self.router.clone();
         tmp.get().execute(&mut c);
-        /*
-        w.headers.date = Some(time::now_utc());
-        w.headers.content_length = Some(14);
+        
+        let parts=c.response.contenttype.split_iter('/').to_owned_vec();
         w.headers.content_type = Some(MediaType {
-            type_: ~"text",
-            subtype: ~"plain",
-            parameters: ~[(~"charset", ~"UTF-8")]
-        });
-        w.headers.server = Some(~"Example");
-        */
-        w.headers.content_type = Some(MediaType {
-            type_: ~"text",
-            subtype: ~"plain",
+            type_: parts[0].to_owned(),
+            subtype: parts[1].to_owned(),
             parameters: ~[(~"charset", ~"UTF-8")]
         });
         w.write(c.response.body.into_bytes());
@@ -90,26 +80,13 @@ fn context(req: &http::server::Request) -> HttpContext {
     println!("uri: {:?}", req.request_uri);
     HttpContext {
         request: Request{
-            path: path_to_str(&req.request_uri),//format!("{:?}", req.request_uri),
-            querystring: ~""
+            path: path_to_str(&req.request_uri),
+            querystring: ~"" //currently rust-http doesn't parse query strings
         },
         response: Response::new()
     }
 }
 
-enum Foo
-{
-    Star,
-    Baz(Router),
-    Bar(~str)
-}
-fn tester(foo: Foo) -> ~str{
-    match foo {
-        Star => ~"",
-        Bar(x) => x.to_owned(),
-        Baz(r) => ~"foo"
-    }
-}
 
 fn path_to_str(r: &http::server::request::RequestUri) -> ~str {
     match *r {
