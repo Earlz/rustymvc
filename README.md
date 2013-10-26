@@ -10,6 +10,19 @@ RustyMVC is a portable MVC framework for Rust.
 RustyMVC is based off of [LucidMVC](https://github.com/Earlz/lucidmvc), an MVC framework with similar goals, but written in .NET. 
 Although it is not intended to be source compatible in any way, most design decisions are influenced by my existing code there. 
 
+# Building
+
+Build the core framework by using the makefile.
+
+    make
+
+You can run the test suite by using the `test` target
+
+    make test
+    
+You should also be capable of using `rustpkg` to build it, but I'm not currently worrying about it. 
+
+
 # Example usage
 
 Example usage varies because of portabiility to different HTTP servers, but here is an illustrative example:

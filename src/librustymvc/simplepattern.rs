@@ -14,6 +14,9 @@ impl ParameterDictionary {
         let v=self.params.find_or_insert(key.into_owned(), ~[]);
         v.push(value.into_owned());
     }
+    fn get(&self, rhs: &~str) -> ~str {
+        self.params.get(rhs).head().clone()
+    }
 }
 impl Index<~str, ~str> for ParameterDictionary {
     fn index(&self, rhs: &~str) -> ~str {
