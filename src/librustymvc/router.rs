@@ -29,7 +29,7 @@ impl Response{
 
 
 pub struct Route {
-    matcher: ~PatternMatcher,
+    matcher: ~PatternMatcher:Freeze+Send,
     handler: ~fn:Send+Freeze(&mut ControllerContext)
 }
 
@@ -45,7 +45,7 @@ impl Router{
     pub fn add(&mut self, r: ~Route){
         self.routes.push(*r);
     }
-    pub fn execute(&mut self, c: &mut HttpContext) {
+    pub fn execute(&self, c: &mut HttpContext) {
         for route in self.routes.iter(){
             let res=route.matcher.matches(c.request.path);
             
@@ -94,7 +94,7 @@ impl<'self,T> ControllerBox<'self,T>{
     pub fn with(&'self mut self, invoker: ~fn:Send+Freeze(&mut T, &mut ControllerContext)) -> &'self mut ControllerBox<'self,T>{
         let tmp=self.creator.take();
         
-        self.router.add(~Route{matcher: ~SimplePattern::new(self.path) as ~PatternMatcher, handler: |c| {
+        self.router.add(~Route{matcher: ~SimplePattern::new(self.path) as ~PatternMatcher:Freeze+Send, handler: |c| {
             match tmp {
                 None => (),
                 Some(ref t) => {

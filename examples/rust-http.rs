@@ -6,9 +6,10 @@ extern mod http;
 use std::rt::io::net::ip::{SocketAddr, Ipv4Addr};
 use std::rt::io::Writer;
 use extra::time;
-use std::rc::RcMut;
+use extra::arc::Arc;
 
 use http::server::{Config, Server, ServerUtil, Request, ResponseWriter};
+use http::server::request::RequestUri;
 use http::headers::content_type::MediaType;
 
 use rustymvc::router::{ControllerContext, HttpContext, Router, Response, Request};
@@ -16,14 +17,14 @@ use rustymvc::router::{ControllerContext, HttpContext, Router, Response, Request
 
 #[deriving(Clone)]
 struct MvcServer{
-    router: RcMut<Router>
+    router: Arc<Router>
 }
 
 impl MvcServer {
     fn new() -> MvcServer {
         let router=MvcServer::init_router();
         
-        MvcServer{router: RcMut::new(router)}
+        MvcServer{router: Arc::new(router)}
     }
     fn init_router() -> Router {
         let mut router=Router::new();
@@ -45,7 +46,11 @@ impl Server for MvcServer {
         Config { bind_address: SocketAddr { ip: Ipv4Addr(127, 0, 0, 1), port: 8001 } }
     }
 
-    fn handle_request(&self, _r: &http::server::Request, w: &mut ResponseWriter) {
+    fn handle_request(&self, r: &http::server::Request, w: &mut ResponseWriter) {
+        let mut c=context(r);
+        let mut tmp = &mut self.router.clone();
+        tmp.get().execute(&mut c);
+        /*
         w.headers.date = Some(time::now_utc());
         w.headers.content_length = Some(14);
         w.headers.content_type = Some(MediaType {
@@ -54,8 +59,13 @@ impl Server for MvcServer {
             parameters: ~[(~"charset", ~"UTF-8")]
         });
         w.headers.server = Some(~"Example");
-
-        w.write(bytes!("Hello, World!\n"));
+        */
+        w.headers.content_type = Some(MediaType {
+            type_: ~"text",
+            subtype: ~"plain",
+            parameters: ~[(~"charset", ~"UTF-8")]
+        });
+        w.write(c.response.body.into_bytes());
     }
 
 }
@@ -76,26 +86,41 @@ impl TestController{
     }
 }
 
-fn context(req: http::server::Request) -> HttpContext {
+fn context(req: &http::server::Request) -> HttpContext {
+    println!("uri: {:?}", req.request_uri);
     HttpContext {
         request: Request{
-            path: format!("{:?}", req.request_uri),
+            path: path_to_str(&req.request_uri),//format!("{:?}", req.request_uri),
             querystring: ~""
         },
         response: Response::new()
     }
 }
-/*
-fn path_to_str(uri: RequestUri) -> ~str {
-    match(uri) {
+
+enum Foo
+{
+    Star,
+    Baz(Router),
+    Bar(~str)
+}
+fn tester(foo: Foo) -> ~str{
+    match foo {
         Star => ~"",
-        AbsoluteUri(path) => ~"",
-        AbsolutePath(path) => ~path.clone(),
-        Authority => ~""
+        Bar(x) => x.to_owned(),
+        Baz(r) => ~"foo"
     }
 }
-*/
+
+fn path_to_str(r: &http::server::request::RequestUri) -> ~str {
+    match *r {
+        http::server::request::Star => ~"",
+        http::server::request::AbsoluteUri(_) => ~"",
+        http::server::request::AbsolutePath(ref path) => path.to_owned(),
+        http::server::request::Authority(_) => ~""
+    }
+    
+}
+
 fn main() {
-    let server = MvcServer::new();;
-    server.serve_forever();
+    MvcServer::new().serve_forever();
 }
