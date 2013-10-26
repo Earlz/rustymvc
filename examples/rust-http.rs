@@ -1,4 +1,17 @@
-//! A very simple HTTP server which responds with the plain text "Hello, World!" to every request.
+/*
+This is a simple integration with rust-http. rust-http is still pretty rough around the edges,
+so this sample is as well. 
+
+To compile use something like so: (make sure you compile rust-http first)
+
+    rustc -L ~/rust-http/build -L ../build/ rust-http.rs
+
+To run, just do
+
+    ./rust-http
+
+You can test it out by going to http://127.0.0.1:8001/say/hello
+*/
 extern mod rustymvc;
 extern mod extra;
 extern mod http;
