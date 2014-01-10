@@ -67,10 +67,10 @@ impl Router{
 }
 
 
-pub struct ControllerContext<'self>
+pub struct ControllerContext<'l>
 {
-    http: &'self mut HttpContext,
-    router: &'self Router,
+    http: &'l mut HttpContext,
+    router: &'l Router,
     route_params: ParameterDictionary
 }
 
@@ -80,18 +80,18 @@ pub trait HttpController{
 }
 
 
-pub struct ControllerBox<'self,T>{
-    router: &'self mut Router,
+pub struct ControllerBox<'l,T>{
+    router: &'l mut Router,
     path: ~str,
     creator: Option<~fn:Send+Freeze(&mut ControllerContext) -> T>
 }
 
-impl<'self,T> ControllerBox<'self,T>{
-    pub fn handles(&'self mut self, path: ~str) -> &'self mut ControllerBox<'self,T>{
+impl<'l,T> ControllerBox<'l,T>{
+    pub fn handles(&'l mut self, path: ~str) -> &'l mut ControllerBox<'l,T>{
         self.path=path;
         self
     }
-    pub fn with(&'self mut self, invoker: ~fn:Send+Freeze(&mut T, &mut ControllerContext)) -> &'self mut ControllerBox<'self,T>{
+    pub fn with(&'l mut self, invoker: ~fn:Send+Freeze(&mut T, &mut ControllerContext)) -> &'l mut ControllerBox<'l,T>{
         let tmp=self.creator.take();
         
         self.router.add(~Route{matcher: ~SimplePattern::new(self.path) as ~PatternMatcher:Freeze+Send, handler: |c| {
