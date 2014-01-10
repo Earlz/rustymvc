@@ -67,10 +67,10 @@ impl SimplePattern {
     }
     /*This will update the "groups", which is basically a way to pre-cache and break apart the important parts of the pattern*/
     fn update_groups(&mut self){
-        for g in self.pattern.split_iter('/').filter(|x| !x.is_empty()) {
+        for g in self.pattern.split_str("/").filter(|x| !x.is_empty()) {
             if(g.char_at(0) == '[') {
                 //group
-                if(g.iter().any(|x| x=='=')) {
+                if(g.chars().any(|x| x=='=')) {
                     //let 
                     //self.groups.push(PatternGroup{
                         
@@ -100,7 +100,7 @@ impl SimplePattern {
 
 impl PatternMatcher for SimplePattern {
     fn matches(&self, input: &str) -> MatchResult {
-        let parts=input.split_iter('/').filter(|x| !x.is_empty()).to_owned_vec();
+        let parts=input.split_str("/").filter(|x| !x.is_empty()).to_owned_vec();
         let mut res;
         if(parts.len() == 0 && self.groups.len() ==0 ){
             return MatchResult::a_match(ParameterDictionary::new());
